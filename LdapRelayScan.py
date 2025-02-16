@@ -10,6 +10,9 @@ import asyncio
 from msldap.connection import MSLDAPClientConnection
 from msldap.commons.factory import LDAPConnectionFactory
 
+# Import colorama and initialize it
+from colorama import init, Fore, Style
+init()
 
 class CheckLdaps:
     def __init__(self, nameserver, username, cmdLineOptions):
@@ -214,34 +217,33 @@ if __name__ == '__main__':
 
 
     dcList = ResolveDCs(options.dc_ip, fqdn)
-    print("\n~Domain Controllers identified~")
+    print(f"\n{Fore.BLUE}~Domain Controllers identified~{Style.RESET_ALL}")
     for dc in dcList:
         print("   " + dc)
 
-    print("\n~Checking DCs for LDAP NTLM relay protections~")
+    print(f"\n{Fore.BLUE}~Checking DCs for LDAP NTLM relay protections~{Style.RESET_ALL}")
     username = fqdn + "\\" + domainUser
     #print("VALUES AUTHING WITH:\nUser: "+domainUser+"\nPass: " +password + "\nDomain:  "+fqdn)
 
     for dc in dcList:
-        print("   " + dc)
+        print(f"   {Fore.BLUE}{dc}{Style.RESET_ALL}")
         try:
             if options.method == "BOTH":
                 ldapIsProtected = run_ldap(username, password, dc)
                 if ldapIsProtected == False:
-                    print("      [+] (LDAP)  SERVER SIGNING REQUIREMENTS NOT ENFORCED! ")
+                    print(f"      [+] {Fore.RED}(LDAP)  SERVER SIGNING REQUIREMENTS NOT ENFORCED!{Style.RESET_ALL} ")
                 elif ldapIsProtected == True:
-                    print("      [-] (LDAP)  server enforcing signing requirements")
+                    print(f"      [-] {Fore.GREEN}(LDAP)  server enforcing signing requirements{Style.RESET_ALL}")
             if DoesLdapsCompleteHandshake(dc) == True:
                 ldapsChannelBindingAlwaysCheck = run_ldaps_noEPA(username, password, dc)
                 ldapsChannelBindingWhenSupportedCheck = asyncio.run(run_ldaps_withEPA(username, password, dc, fqdn, options.timeout))
                 if ldapsChannelBindingAlwaysCheck == False and ldapsChannelBindingWhenSupportedCheck == True:
-                    print("      [-] (LDAPS) channel binding is set to \"when supported\" - this")
-                    print("                  may prevent an NTLM relay depending on the client's")
-                    print("                  support for channel binding.")
+                    print(f"      [-] {Fore.YELLOW}(LDAPS) channel binding is set to \"when supported\"{Style.RESET_ALL}")
+                    print("                  this may prevent an NTLM relay depending on the client's support for channel binding.")
                 elif ldapsChannelBindingAlwaysCheck == False and ldapsChannelBindingWhenSupportedCheck == False:
-                        print("      [+] (LDAPS) CHANNEL BINDING SET TO \"NEVER\"! PARTY TIME!")
+                        print(f"      [+] {Fore.RED}(LDAPS) CHANNEL BINDING SET TO \"NEVER\"! PARTY TIME!{Style.RESET_ALL}")
                 elif ldapsChannelBindingAlwaysCheck == True:
-                    print("      [-] (LDAPS) channel binding set to \"required\", no fun allowed")
+                    print(f"      [-] {Fore.GREEN}(LDAPS) channel binding set to \"required\", no fun allowed{Style.RESET_ALL}")
                 else:
                     print("\nSomething went wrong...")
                     print("For troubleshooting:\nldapsChannelBindingAlwaysCheck - " +str(ldapsChannelBindingAlwaysCheck)+"\nldapsChannelBindingWhenSupportedCheck: "+str(ldapsChannelBindingWhenSupportedCheck))
